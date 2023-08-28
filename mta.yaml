@@ -34,6 +34,22 @@ modules:
     requires:
       - name: risk-management-db
 
+  - name: risk-management
+    type: approuter.nodejs
+    path: app/ # from cds.env.folders. Consider also cds.env.build.target -> gen/app
+    parameters:
+      keep-existing-routes: true
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv-api # must be used in xs-app.json as well
+          url: ~{srv-url}
+          forwardAuthToken: true
+      - name: risk-management-auth
+
 resources:
   - name: risk-management-auth
     type: org.cloudfoundry.managed-service
@@ -44,9 +60,10 @@ resources:
       config:
         xsappname: risk-management-${org}-${space}
         tenant-mode: dedicated
-      oauth2-configuration: # <-- add this
+      oauth2-configuration:
+        # <-- add this
         redirect-uris:
-          - https:///login/callback
+          - https://~{srv-url}/login/callback
   - name: risk-management-db
     type: com.sap.xs.hdi-container
     parameters:
@@ -57,5 +74,3 @@ resources:
     parameters:
       service: destination
       service-plan: lite
-  
-
